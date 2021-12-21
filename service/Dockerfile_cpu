@@ -1,0 +1,14 @@
+FROM python:3.6-stretch
+
+WORKDIR /opt
+
+COPY requirements_cpu.txt /opt
+
+RUN pip install -r requirements_cpu.txt
+
+COPY src/ /opt
+
+EXPOSE 5000
+EXPOSE 80
+
+CMD ["python3", "app.py"]

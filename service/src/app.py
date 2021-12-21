@@ -1,4 +1,6 @@
 import shutil
+
+import uvicorn
 from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -10,7 +12,7 @@ from processor import Processor
 from reader import read_video
 
 
-processor = Processor("cuda")
+processor = Processor("cpu")
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -31,3 +33,7 @@ async def post_basic(request: Request, file: UploadFile = File(...)):
     gif_path = "gif.gif"
     imageio.mimsave(gif_path, [face for face in np.array(frames)[index]], duration=0.5)
     return FileResponse(gif_path)
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=5000)

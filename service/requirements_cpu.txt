@@ -1,0 +1,18 @@
+numpy == 1.16.1
+opencv-python == 4.2.0.32
+
+fastapi == 0.65.1
+Pillow == 8.4.0
+attrdict == 2.0.1
+mxnet == 1.5.1.post0
+scikit-learn == 0.18.1
+scikit-image == 0.14.2
+json-logging-py == 0.2
+Cython==0.29.22
+Jinja2 == 3.0.1
+uvicorn == 0.13.4
+batch-face == 1.0.0
+imageio == 2.10.1
+imageio-ffmpeg == 0.4.5
+aiofiles == 0.8.0
+
