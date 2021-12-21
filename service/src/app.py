@@ -1,3 +1,4 @@
+import sys
 import shutil
 
 import uvicorn
@@ -28,10 +29,12 @@ async def post_basic(request: Request, file: UploadFile = File(...)):
     filename = 'test.mp4'
     with open(filename, 'wb') as buffer:
         shutil.copyfileobj(file.file, buffer)
-    frames = read_video(filename, processor)
+    frames = read_video(filename, processor, 500)
     index = [i for i in range(20, 80, 5)]
     gif_path = "gif.gif"
     imageio.mimsave(gif_path, [face for face in np.array(frames)[index]], duration=0.5)
+    print("Done")
+    sys.stdout.flush()
     return FileResponse(gif_path)
 
 
