@@ -159,12 +159,15 @@ RUN apk update
 RUN apk add build-base
 
 RUN pip3 install av
+RUN pip install --upgrade pip
+
+RUN apk add zlib-dev jpeg-dev
+RUN pip3 install requests Pillow
 
 # Add NGINX path, config and static files.
 ENV PATH "${PATH}:/usr/local/nginx/sbin"
 ADD confs/nginx.conf /etc/nginx/nginx.conf.template
 RUN mkdir -p /opt/data && mkdir /www
-
 
 WORKDIR /app
 ADD receive.py /app
@@ -177,5 +180,3 @@ EXPOSE 80
 CMD envsubst "$(env | sed -e 's/=.*//' -e 's/^/\$/g')" < \
   /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && \
   nginx
-
-#CMD python3 receive.py

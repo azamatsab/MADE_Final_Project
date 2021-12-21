@@ -34,10 +34,10 @@ for stream in input_resource.streams:
         break
 
 # Для входного и выходного ресурсов возьмём поток аудио.
-for stream in input_resource.streams:
-    if stream.type == 'audio':
-        input_streams += [stream]
-        break
+#for stream in input_resource.streams:
+#    if stream.type == 'audio':
+#        input_streams += [stream]
+#        break
 
 # В этом списке будем хранить пакеты выходного потока.
 output_packets = list()
@@ -47,6 +47,8 @@ for packet in input_resource.demux(input_streams):
     # Получим все кадры пакета.
     for frame in packet.decode():
         # Сбросим PTS для самостоятельного вычислении при кодировании.
-        frame.pts = None
-        #logger.info("Frame received")
-
+        #frame.pts = None
+        #logger.info(type(frame))
+        #frame.to_image().save('/app/filtered.png')
+        f = frame.to_image()
+        logger.info(type(f))
