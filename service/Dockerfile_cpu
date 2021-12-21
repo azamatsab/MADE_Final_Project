@@ -6,9 +6,16 @@ COPY requirements_cpu.txt /opt
 
 RUN pip install -r requirements_cpu.txt
 
+RUN pip install filterpy==1.4.5
+RUN pip install python-multipart
+
 COPY src/ /opt
+COPY alignment.py /usr/local/lib/python3.6/site-packages/batch_face/face_detection/alignment.py
+
+#RUN cat /usr/local/lib/python3.6/site-packages/batch_face/face_detection/alignment.py
 
 EXPOSE 5000
 EXPOSE 80
 
 CMD ["python3", "app.py"]
+#CMD ["ls", "/usr/local/lib/python3.6/site-packages/torch"]
