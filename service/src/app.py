@@ -11,7 +11,7 @@ import imageio
 import numpy as np
 
 from processor import Processor
-from reader import read_video
+from reader import read_video, Reader
 
 
 processor = Processor("cpu")
@@ -27,6 +27,7 @@ video_path = Path("test.mp4")
 @app.get("/play", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("video.html", context={"request": request})
+
 
 @app.get("/video")
 async def video_endpoint(range: str = Header(None)):
@@ -44,9 +45,11 @@ async def video_endpoint(range: str = Header(None)):
         print(end, start)
         return Response(data, status_code=206, headers=headers, media_type="video/mp4")
 
+
 @app.get("/", response_class=HTMLResponse)
 async def get_main(request: Request):
     return templates.TemplateResponse("main.html", {"request": request})
+
 
 @app.post("/", response_class=HTMLResponse)
 async def post_main(request: Request, file: UploadFile = File(...)):
@@ -62,4 +65,8 @@ async def post_main(request: Request, file: UploadFile = File(...)):
 
 
 if __name__ == "__main__":
+    frame_reader = Reader()
+    frame_reader.setDaemon(True)
+    frame_reader.start()
+
     uvicorn.run(app, host="0.0.0.0", port=5000)
