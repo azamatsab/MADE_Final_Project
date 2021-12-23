@@ -1,5 +1,11 @@
-import av
 import logging
+import base64
+
+import av
+import requests
+from PIL import Image
+from io import BytesIO
+
 
 logging.basicConfig(filename="rec.log",
                             filemode='a',
@@ -13,42 +19,27 @@ logger = logging.getLogger('receiver')
 
 logger.info("Ready to open stream")
 
-# Откроем ресурс на чтение
 input_resource = av.open(
     'rtmp://localhost:1935/src/src'
 )
 
 logger.info("Stream opened")
 
-# Список потоков входного ресурса: видео и аудио
 input_streams = list()
 
-# Список потоков выходного ресурса: видео и аудио
-output_streams = list()
-
-# Для входного и выходного ресурсов возьмём поток видео.
 for stream in input_resource.streams:
     logger.info(stream.type)
     if stream.type == 'video':
         input_streams += [stream]
         break
 
-# Для входного и выходного ресурсов возьмём поток аудио.
-#for stream in input_resource.streams:
-#    if stream.type == 'audio':
-#        input_streams += [stream]
-#        break
-
-# В этом списке будем хранить пакеты выходного потока.
-output_packets = list()
-
-# Применим «инверсное мультиплексирование». Получим пакеты из потока.
 for packet in input_resource.demux(input_streams):
     # Получим все кадры пакета.
     for frame in packet.decode():
-        # Сбросим PTS для самостоятельного вычислении при кодировании.
-        #frame.pts = None
-        #logger.info(type(frame))
-        #frame.to_image().save('/app/filtered.png')
-        f = frame.to_image()
-        logger.info(type(f))
+        img = frame.to_image()
+
+        buffered = BytesIO()
+        img.save(buffered, format="JPEG")
+        img_str = base64.b64encode(buffered.getvalue())
+
+        requests.post("http://fastapi:5000/put", data=img_str)

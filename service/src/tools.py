@@ -1,7 +1,10 @@
 import glob
 import time
+import string
+import random
 from copy import deepcopy
 
+import numpy as np
 import imageio
 import cv2
 import PIL
@@ -69,3 +72,6 @@ def add_margin(h, w, box, margin=0):
     y1 = max(0, y1 - margin)
     y2 = min(y2 + margin, h)
     return [x1, y1, x2, y2]
+
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
