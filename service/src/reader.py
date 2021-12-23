@@ -45,6 +45,7 @@ class Writer(Thread):
         Thread.__init__(self)
         self.cap = cap
         self.reader = reader
+        self.fps = cap.get(cv2.CAP_PROP_FPS)
 
     def run(self):
         f_counter = 0
@@ -55,7 +56,7 @@ class Writer(Thread):
             if ret == True:
                 f_counter += 1
                 if f_counter % STEP == 0:
-                    self.reader.put(frame, VIDEO_TYPE)
+                    self.reader.put(frame, VIDEO_TYPE, 1000 * self.fps / f_counter)
             else:
                 break
         self.cap.release()
@@ -64,12 +65,14 @@ class Info:
     def __init__(self):
         self.classes = np.array([])
         self.scores = np.array([])
+        self.timestamps = np.array([])
         self.faces = defaultdict(list)
         self.gif_length = 20
 
-    def add(self, scores, classes, faces):
+    def add(self, scores, classes, faces, timestamps):
         self.classes = np.concatenate([self.classes, classes])
         self.scores = np.concatenate([self.scores, scores])
+        self.timestamps = np.concatenate([self.timestamps, timestamps])
 
         for face, cls in zip(faces, classes):
             self.faces[cls].append(face)
@@ -77,13 +80,18 @@ class Info:
                 random.shuffle(self.faces[cls])
                 self.faces[cls].pop()
 
-    def get(self):
+    def get_data(self):
         classes = set(list(self.classes))
-        cls_dict = {}
+        filenames = []
         for cls in list(classes):
             scores = self.scores[self.classes == cls]
-            cls_dict[cls] = scores
-        return cls_dict
+            timestamps = self.timestamps[self.classes == cls]
+            f_name = str(cls) + ".csv"
+            with open(f_name, "w") as fout:
+                for score, ts in zip(scores, timestamps):
+                    fout.write("{},{}\n".format(score, ts))
+            filenames.append(f_name)
+        return filenames
 
     def get_gif(self):
         classes = list(set(list(self.classes)))
@@ -104,12 +112,13 @@ class Reader(Thread):
         self.out_stream = Queue(QUEUE_SIZE)
         self.batch = []
         self.sources = []
+        self.timestamps = []
 
         self.video_info = Info()
         self.stream_info = Info()
 
-    def put(self, frame, packet_type):
-        self.save_put((packet_type, frame), self.inp_queue)
+    def put(self, frame, packet_type, timestamp):
+        self.save_put((packet_type, frame, timestamp), self.inp_queue)
 
     def save_put(self, data, queue):
         try:
@@ -130,18 +139,19 @@ class Reader(Thread):
         return self.get(self.out_stream)
 
     def process_batch(self):
-        batch, (scores, classes, faces) = self.processor(self.batch)
+        batch, (scores, classes, faces, timestamps) = self.processor(self.batch, self.timestamps)
         
         for packet_type, frame in zip(self.sources, batch):
             if packet_type == VIDEO_TYPE:
                 self.save_put(frame, self.out_video)
-                self.video_info.add(scores, classes, faces)
+                self.video_info.add(scores, classes, faces, timestamps)
             else:
                 self.save_put(frame, self.out_stream)
-                self.stream_info.add(scores, classes, faces)
+                self.stream_info.add(scores, classes, faces, timestamps)
 
         self.batch = []
         self.sources = []
+        self.timestamps = []
 
     def run(self):
         f_counter = 0
@@ -153,9 +163,10 @@ class Reader(Thread):
             else:
                 try:
                     for _ in range(STEP):
-                        packet_type, frame = self.inp_queue.get()
+                        packet_type, frame, timestamp = self.inp_queue.get()
                     self.batch.append(frame)
                     self.sources.append(packet_type)
+                    self.timestamps.append(timestamp)
                     if len(self.batch) == BATCH_SIZE:
                         self.process_batch()
                 except Exception as e:

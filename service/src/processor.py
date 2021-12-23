@@ -28,11 +28,12 @@ class Processor:
         self.classify_origin = False
         self.height = 380
         
-    def detect_and_track(self, frames, oframes, scale):
+    def detect_and_track(self, frames, oframes, scale, timestamps):
         info = []
         faces = []
         classes = []
         orig_faces = []
+        tsps = []
         
         detected_frames = parse_out(self.detector(frames))
         
@@ -43,7 +44,7 @@ class Processor:
         else:
             scale = 1
         
-        for frame, out in zip(frames, detected_frames):
+        for frame, out, ts in zip(frames, detected_frames, timestamps):
             detections = [face[0] for face in out]
             boxes = []
             if len(detections):
@@ -57,8 +58,9 @@ class Processor:
                     faces.append(preprocess(frame[y1:y2, x1:x2]).unsqueeze(0))
                     classes.append(cls)
                     orig_faces.append(frame[y1:y2, x1:x2])
+                    tsps.append(ts)
             info.append(boxes)
-        return info, faces, classes, orig_faces
+        return info, faces, classes, orig_faces, tsps
 
     def set_label(self, info, scores, frames, scale):
         processed = []
@@ -111,12 +113,12 @@ class Processor:
         assert len(faces) == len(scores_all), (len(faces), len(scores_all), num_iter, mod)
         return scores_all
         
-    def __call__(self, frames):
+    def __call__(self, frames, timestamps):
         processed = []
         scaled_frames, scale = self.scale_frames(frames)
-        info, faces, classes, orig_faces = self.detect_and_track(scaled_frames, frames, scale)
+        info, faces, classes, orig_faces, timestamps = self.detect_and_track(scaled_frames, frames, scale, timestamps)
         if len(faces):
             faces = torch.cat(faces, dim=0)
             scores = self.regress(faces)
             processed = self.set_label(info, scores, frames, scale)
-        return processed, (scores, classes, orig_faces)
+        return processed, (scores, classes, orig_faces, timestamps)

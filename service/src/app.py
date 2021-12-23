@@ -35,7 +35,8 @@ async def read_root(request: Request):
 @app.get("/download_vgif")
 async def download_videogif(request: Request):
     filenames = frame_reader.video_info.get_gif()
-    stream, zip_filename = zipfiles(filenames)
+    filenames2 = frame_reader.video_info.get_data()
+    stream, zip_filename = zipfiles(filenames + filenames2)
     return Response(stream.getvalue(), media_type="application/x-zip-compressed", headers={
         'Content-Disposition': f'attachment;filename={zip_filename}'
     })
@@ -43,7 +44,8 @@ async def download_videogif(request: Request):
 @app.get("/download_sgif")
 async def download_videogif(request: Request):
     filenames = frame_reader.stream_info.get_gif()
-    stream, zip_filename = zipfiles(filenames)
+    filenames2 = frame_reader.stream_info.get_data()
+    stream, zip_filename = zipfiles(filenames + filenames2)
     return Response(stream.getvalue(), media_type="application/x-zip-compressed", headers={
         'Content-Disposition': f'attachment;filename={zip_filename}'
     })
@@ -62,7 +64,7 @@ def streamer():
                 b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n\r\n')
         except GeneratorExit:
             logging.info("Cancelling generator")
-        restart -=1
+        restart -= 1
         time.sleep(0.05)
 
 def streamer2():
@@ -79,7 +81,7 @@ def streamer2():
                 b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n\r\n')
         except GeneratorExit:
             logging.info("Cancelling generator")
-        restart -=1
+        restart -= 1
         time.sleep(0.05)
 
 @app.get("/video")
@@ -113,7 +115,7 @@ async def rtmp_frame(request: Request):
     img = Image.open(BytesIO(base64.b64decode(contents)))
     open_cv_image = np.array(img) 
     open_cv_image = open_cv_image[:, :, ::-1]
-    frame_reader.put(open_cv_image, "stream")
+    frame_reader.put(open_cv_image, "stream", time.time())
     return JSONResponse([{"status": "ok"}])
 
 if __name__ == "__main__":
