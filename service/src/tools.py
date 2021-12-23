@@ -1,8 +1,11 @@
+import os
 import glob
 import time
 import string
 import random
+import zipfile
 from copy import deepcopy
+from io import BytesIO
 
 import numpy as np
 import imageio
@@ -15,6 +18,19 @@ from torchvision import transforms
 from configs import *
 from face_models import MobileFaceNet
 
+
+def zipfiles(filenames):
+    zip_subdir = "archive"
+    zip_filename = "%s.zip" % zip_subdir
+    stream = BytesIO()
+    zf = zipfile.ZipFile(stream, "w")
+
+    for fpath in filenames:
+        fdir, fname = os.path.split(fpath)
+        zip_path = os.path.join(zip_subdir, fname)
+        zf.write(fpath, zip_path)
+    zf.close()
+    return stream, zip_filename
 
 resize = transforms.Compose([
     transforms.Resize((112, 112)),
@@ -39,12 +55,11 @@ def get_model(path, device):
     return model
 
 def get_label(score):
-    score = 1 - score
     color2 = [50, 255, 255]
-    if score < 0.48:
+    if score < 0.33:
         color1 = [255, 0, 0]
         return "low", color2, color1
-    elif score > 0.7:
+    elif score > 0.6:
         color1 = [0, 255, 0]
         return "high", color2, color1
     

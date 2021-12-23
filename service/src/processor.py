@@ -31,6 +31,8 @@ class Processor:
     def detect_and_track(self, frames, oframes, scale):
         info = []
         faces = []
+        classes = []
+        orig_faces = []
         
         detected_frames = parse_out(self.detector(frames))
         
@@ -53,8 +55,10 @@ class Processor:
                     boxes.append((cls, box))
                     x1, y1, x2, y2 = box
                     faces.append(preprocess(frame[y1:y2, x1:x2]).unsqueeze(0))
+                    classes.append(cls)
+                    orig_faces.append(frame[y1:y2, x1:x2])
             info.append(boxes)
-        return info, faces
+        return info, faces, classes, orig_faces
 
     def set_label(self, info, scores, frames, scale):
         processed = []
@@ -110,9 +114,9 @@ class Processor:
     def __call__(self, frames):
         processed = []
         scaled_frames, scale = self.scale_frames(frames)
-        info, faces = self.detect_and_track(scaled_frames, frames, scale)
+        info, faces, classes, orig_faces = self.detect_and_track(scaled_frames, frames, scale)
         if len(faces):
             faces = torch.cat(faces, dim=0)
             scores = self.regress(faces)
             processed = self.set_label(info, scores, frames, scale)
-        return processed
+        return processed, (scores, classes, orig_faces)

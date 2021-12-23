@@ -34,7 +34,6 @@ for stream in input_resource.streams:
         break
 
 for packet in input_resource.demux(input_streams):
-    # Получим все кадры пакета.
     for frame in packet.decode():
         img = frame.to_image()
 
