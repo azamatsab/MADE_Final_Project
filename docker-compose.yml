@@ -2,7 +2,10 @@ version: '3'
 
 services:
   nginx-rtmp:
-    build: nginx-server/
+    image: nginx-rtmp
+    # build: nginx-server/
+    depends_on:
+      - rabbitmq
     ports:
       - 1935:1935
     environment:
@@ -15,14 +18,28 @@ services:
     restart: always
 
   fastapi:
-    build:
-      context: service
-      dockerfile: Dockerfile_cpu
+    image: fastapi_service
+    #build:
+      #context: service
+      #dockerfile: Dockerfile_cpu
     container_name:
       fastapi
+    depends_on:
+      - rabbitmq
     ports:
       - 81:80
       - 5000:5000
     volumes:
       - ${PWD}/service/src:/opt
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     restart: always

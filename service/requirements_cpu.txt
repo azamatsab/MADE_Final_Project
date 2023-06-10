@@ -15,4 +15,5 @@ batch-face == 1.0.0
 imageio == 2.10.1
 imageio-ffmpeg == 0.4.5
 aiofiles == 0.8.0
-
+pika == 
+aio-pika == 9.1.2

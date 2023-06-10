@@ -148,6 +148,9 @@ class Reader(Thread):
             else:
                 self.save_put(frame, self.out_stream)
                 self.stream_info.add(scores, classes, faces, timestamps)
+            
+            print(self.out_video.qsize(), self.inp_queue.qsize())
+            sys.stdout.flush()
 
         self.batch = []
         self.sources = []
