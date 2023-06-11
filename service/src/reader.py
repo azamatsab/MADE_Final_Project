@@ -140,7 +140,7 @@ class Reader(Thread):
 
     def process_batch(self):
         batch, (scores, classes, faces, timestamps) = self.processor(self.batch, self.timestamps)
-        
+
         for packet_type, frame in zip(self.sources, batch):
             if packet_type == VIDEO_TYPE:
                 self.save_put(frame, self.out_video)
@@ -149,9 +149,6 @@ class Reader(Thread):
                 self.save_put(frame, self.out_stream)
                 self.stream_info.add(scores, classes, faces, timestamps)
             
-            print(self.out_video.qsize(), self.inp_queue.qsize())
-            sys.stdout.flush()
-
         self.batch = []
         self.sources = []
         self.timestamps = []
@@ -165,12 +162,12 @@ class Reader(Thread):
                     self.process_batch()
             else:
                 try:
-                    for _ in range(STEP):
+                    for _ in range(min(STEP, self.inp_queue.qsize())):
                         packet_type, frame, timestamp = self.inp_queue.get()
                     self.batch.append(frame)
                     self.sources.append(packet_type)
                     self.timestamps.append(timestamp)
-                    if len(self.batch) == BATCH_SIZE:
+                    if len(self.batch) >= BATCH_SIZE:
                         self.process_batch()
                 except Exception as e:
                     logging.warning(e)

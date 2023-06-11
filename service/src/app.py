@@ -30,26 +30,9 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-
-credentials = pika.PlainCredentials("guest", "guest")
-
-# def startConsumer():
-#     while True:
-#         try:
-#             connection = pika.BlockingConnection(pika.ConnectionParameters(host="rabbitmq", port="5672", credentials=credentials))
-#             channel = connection.channel()
-#             channel.exchange_declare("test", durable=True, exchange_type="topic")
-#             channel.basic_consume(queue="A", on_message_callback=callbackFunctionForQueueA, auto_ack=True)
-#             consumer_thread = Thread(target=channel.start_consuming, daemon=True)
-#             consumer_thread.start()
-#         except:
-#             time.sleep(0.001)
-
 @app.on_event("startup")
 async def startup():
-    # loop = asyncio.get_running_loop()
     loop = asyncio.get_event_loop()
-    # loop.run_until_complete(asyncio.wait(futures))
     task = loop.create_task(consume(loop, callbackFunctionForQueueA))
     await task
 
@@ -59,6 +42,9 @@ def callbackFunctionForQueueA(message):
         img = Image.open(BytesIO(base64.b64decode(body)))
         open_cv_image = np.array(img) 
         open_cv_image = open_cv_image[:, :, ::-1]
+        # print(open_cv_image.shape)
+        # sys.stdout.flush()
+        open_cv_image = cv2.resize(open_cv_image, (0,0), fx=0.5, fy=0.5) 
         frame_reader.put(open_cv_image, "stream", time.time())
 
 @app.get("/play", response_class=HTMLResponse)
@@ -96,6 +82,7 @@ def streamer():
                 _, encodedImage = cv2.imencode(".jpg", frame)
                 yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n\r\n')
+                # time.sleep(0.02)
         except GeneratorExit:
             logging.info("Cancelling generator")
         restart -= 1
@@ -109,6 +96,7 @@ def streamer2():
                 if restart != RESTART_ITER:
                     restart = RESTART_ITER
                 frame = frame_reader.out_stream.get()
+                # frame = cv2.resize(frame, (0,0), fx=2, fy=2)
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 _, encodedImage = cv2.imencode(".jpg", frame)
                 yield (b'--frame\r\n'

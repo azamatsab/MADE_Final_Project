@@ -109,7 +109,7 @@ class Processor:
         if mod > 0:
             scores = self.model(faces[-mod:].to(self.device)).detach().cpu().numpy().reshape(-1)
             scores_all.extend(scores)
-        
+
         assert len(faces) == len(scores_all), (len(faces), len(scores_all), num_iter, mod)
         return scores_all
         
