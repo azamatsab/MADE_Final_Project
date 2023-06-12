@@ -30,11 +30,11 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.on_event("startup")
-async def startup():
-    loop = asyncio.get_event_loop()
-    task = loop.create_task(consume(loop, callbackFunctionForQueueA))
-    await task
+# @app.on_event("startup")
+# async def startup():
+#     loop = asyncio.get_event_loop()
+#     task = loop.create_task(consume(loop, callbackFunctionForQueueA))
+#     await task
 
 def callbackFunctionForQueueA(message):
     body = message.body
@@ -44,7 +44,7 @@ def callbackFunctionForQueueA(message):
         open_cv_image = open_cv_image[:, :, ::-1]
         # print(open_cv_image.shape)
         # sys.stdout.flush()
-        open_cv_image = cv2.resize(open_cv_image, (0,0), fx=0.5, fy=0.5) 
+        # open_cv_image = cv2.resize(open_cv_image, (320, 240))
         frame_reader.put(open_cv_image, "stream", time.time())
 
 @app.get("/play", response_class=HTMLResponse)
@@ -138,6 +138,8 @@ async def rtmp_frame(request: Request):
     open_cv_image = np.array(img) 
     open_cv_image = open_cv_image[:, :, ::-1]
     frame_reader.put(open_cv_image, "stream", time.time())
+    print(frame_reader.inp_queue.qsize(), frame_reader.out_stream.qsize())
+    sys.stdout.flush()
     return JSONResponse([{"status": "ok"}])
 
 if __name__ == "__main__":

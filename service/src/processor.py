@@ -15,6 +15,7 @@ from tools import *
 from sort import *
 from face_models import MobileFaceNet
 
+
 class Processor:
     def __init__(self, device):
         if device == 'cuda':
@@ -37,7 +38,7 @@ class Processor:
         
         detected_frames = parse_out(self.detector(frames))
         
-        assert len(detected_frames) == len(frames), (len(detected_frames), len(frames))
+        # assert len(detected_frames) == len(frames), (len(detected_frames), len(frames))
         
         if self.classify_origin:
             frames = oframes
@@ -115,6 +116,7 @@ class Processor:
         
     def __call__(self, frames, timestamps):
         processed = []
+        scores = []
         scaled_frames, scale = self.scale_frames(frames)
         info, faces, classes, orig_faces, timestamps = self.detect_and_track(scaled_frames, frames, scale, timestamps)
         if len(faces):

@@ -139,15 +139,26 @@ class Reader(Thread):
         return self.get(self.out_stream)
 
     def process_batch(self):
+        print("start")
+        sys.stdout.flush()
         batch, (scores, classes, faces, timestamps) = self.processor(self.batch, self.timestamps)
+        print("#" * 150)
+        sys.stdout.flush()
 
-        for packet_type, frame in zip(self.sources, batch):
-            if packet_type == VIDEO_TYPE:
-                self.save_put(frame, self.out_video)
-                self.video_info.add(scores, classes, faces, timestamps)
-            else:
-                self.save_put(frame, self.out_stream)
-                self.stream_info.add(scores, classes, faces, timestamps)
+        if len(batch):
+            for packet_type, frame in zip(self.sources, batch):
+                if packet_type == VIDEO_TYPE:
+                    self.save_put(frame, self.out_video)
+                    self.video_info.add(scores, classes, faces, timestamps)
+                else:
+                    self.save_put(frame, self.out_stream)
+                    self.stream_info.add(scores, classes, faces, timestamps)
+        else:
+            for packet_type, frame in zip(self.sources, self.batch):
+                if packet_type == VIDEO_TYPE:
+                    self.save_put(frame, self.out_video)
+                else:
+                    self.save_put(frame, self.out_stream)
             
         self.batch = []
         self.sources = []
